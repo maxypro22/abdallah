@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../services/api';
-import { Calendar, Save, ArrowRight, Gavel, FileText } from 'lucide-react';
+import { Calendar, Save, ArrowRight, Gavel, FileText, Download } from 'lucide-react';
 
 const CaseDetails = () => {
     const { id } = useParams();
@@ -16,6 +16,54 @@ const CaseDetails = () => {
     const fetchCaseDetails = async () => {
         const { data } = await api.get(`/cases/${id}`);
         setData(data);
+    };
+
+    const handleExportCaseCSV = () => {
+        try {
+            if (!data) return;
+
+            const { caseItem, hearings } = data;
+            
+            // Headers for Case + Hearings
+            const headers = ['الرقم/التاريخ', 'اسم الموكل/الجلسة', 'التفاصيل/المحكمة', 'الحالة/النتيجة'];
+            
+            // Case Row
+            const rows = [[
+                `"قضية رقم: ${caseItem.caseNumber}"`,
+                `"الموكل: ${caseItem.clientName}"`,
+                `"المحكمة: ${caseItem.court || '---'}"`,
+                `"الحالة: ${caseItem.status === 'new' ? 'جديدة' : caseItem.status === 'adjourned' ? 'مؤجلة' : 'منتهية'}"`
+            ]];
+
+            // Empty row separator
+            rows.push(['""', '""', '""', '""']);
+            rows.push(['"سجل الجلسات"', '""', '""', '""']);
+            rows.push(['"التاريخ"', '"الوقت"', '"المحكمة/الدائرة"', '"النتيجة"']);
+
+            // Hearing Rows
+            hearings.forEach(h => {
+                rows.push([
+                    `"${new Date(h.date).toLocaleDateString('ar-EG')}"`,
+                    `"${h.time}"`,
+                    `"${h.court || '---'}"`,
+                    `"${h.result || 'بانتظار النتيجة'}"`
+                ]);
+            });
+
+            const csvContent = "\uFEFF" + rows.map(r => r.join(',')).join('\n');
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.setAttribute('href', url);
+            const fileName = `تقرير_قضية_${caseItem.caseNumber}.csv`;
+            link.setAttribute('download', fileName);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        } catch (error) {
+            console.error('Export Error:', error);
+            alert('حدث خطأ أثناء تصدير التقرير');
+        }
     };
 
     const handleAddHearing = async (e) => {
@@ -36,10 +84,27 @@ const CaseDetails = () => {
     return (
         <div>
             <div className="header-bar">
-                <button onClick={() => navigate(-1)} className="button-primary" style={{ background: 'transparent', color: '#9CA3AF', padding: '0 1rem' }}>
-                    <ArrowRight size={18} /> العودة
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                    <button onClick={() => navigate(-1)} className="button-primary" style={{ background: 'transparent', color: '#9CA3AF', padding: '0 1rem' }}>
+                        <ArrowRight size={18} /> العودة
+                    </button>
+                    <h2 style={{ margin: 0 }}>تفاصيل القضية: {data.caseItem.caseNumber}</h2>
+                </div>
+                <button 
+                    onClick={handleExportCaseCSV} 
+                    className="button-primary" 
+                    style={{ 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        gap: '8px', 
+                        background: 'rgba(16, 185, 129, 0.15)', 
+                        color: '#10B981',
+                        border: '1px solid rgba(16, 185, 129, 0.3)'
+                    }}
+                >
+                    <Download size={18} />
+                    تصدير تقرير (Excel)
                 </button>
-                <h2 style={{ margin: 0 }}>تفاصيل القضية: {data.caseItem.caseNumber}</h2>
             </div>
 
             <div className="grid">

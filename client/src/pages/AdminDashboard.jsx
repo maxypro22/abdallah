@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
-import { Users, Gavel, TrendingUp, AlertCircle, RefreshCw, Edit2, ExternalLink, X, Save, Trash2, Search } from 'lucide-react';
+import { Users, Gavel, TrendingUp, AlertCircle, RefreshCw, Edit2, ExternalLink, X, Save, Trash2, Search, Download } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 const AdminDashboard = () => {
@@ -39,6 +39,47 @@ const AdminDashboard = () => {
             console.error('Failed to fetch data:', error);
         }
         setLoading(false);
+    };
+
+    const handleExportCSV = () => {
+        try {
+            if (cases.length === 0) {
+                alert('لا توجد بيانات لتصديرها حالياً');
+                return;
+            }
+
+            // Headers in Arabic
+            const headers = ['رقم القضية', 'اسم الموكل', 'الهاتف', 'نوع القضية', 'المحكمة', 'الحالة', 'المذكرة', 'تاريخ التسجيل'];
+            
+            // Map rows and escape data for CSV (wrapping in quotes to handle commas)
+            const rows = cases.map(c => [
+                `"${c.caseNumber || ''}"`,
+                `"${c.clientName || ''}"`,
+                `"${c.clientPhone || ''}"`,
+                `"${c.type || ''}"`,
+                `"${c.court || ''}"`,
+                `"${c.status === 'new' ? 'جديدة' : c.status === 'adjourned' ? 'مؤجلة' : 'منتهية'}"`,
+                `"${(c.memo || '').replace(/"/g, '""')}"`, // Escape double quotes
+                `"${new Date(c.createdAt).toLocaleDateString('ar-EG')}"`
+            ]);
+
+            // Combine into string with UTF-8 BOM for Excel Arabic support
+            const csvContent = "\uFEFF" + [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+            
+            // Create blob and download link
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.setAttribute('href', url);
+            const fileName = `المرقاب_نسخة_احتياطية_${new Date().toLocaleDateString('ar-EG').replace(/\//g, '-')}.csv`;
+            link.setAttribute('download', fileName);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        } catch (error) {
+            console.error('Export Error:', error);
+            alert('حدث خطأ أثناء محاولة تصدير البيانات');
+        }
     };
 
     useEffect(() => {
@@ -101,10 +142,37 @@ const AdminDashboard = () => {
                     </div>
                     <p style={{ color: '#9CA3AF', margin: '5px 0 0 0' }}>إحصائيات مباشرة وأداء المكتب</p>
                 </div>
-                <button onClick={() => fetchData(true)} className="button-primary" style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'rgba(255,255,255,0.05)', color: '#9CA3AF' }}>
-                    <RefreshCw size={18} className={loading ? 'animate-spin' : ''} />
-                    تحديث البيانات (إجباري)
-                </button>
+                <div style={{ display: 'flex', gap: '10px' }}>
+                    <button 
+                        onClick={handleExportCSV} 
+                        className="button-primary" 
+                        style={{ 
+                            display: 'flex', 
+                            alignItems: 'center', 
+                            gap: '8px', 
+                            background: 'rgba(16, 185, 129, 0.15)', 
+                            color: '#10B981',
+                            border: '1px solid rgba(16, 185, 129, 0.3)'
+                        }}
+                    >
+                        <Download size={18} />
+                        نسخة احتياطية (Excel)
+                    </button>
+                    <button 
+                        onClick={() => fetchData(true)} 
+                        className="button-primary" 
+                        style={{ 
+                            display: 'flex', 
+                            alignItems: 'center', 
+                            gap: '8px', 
+                            background: 'rgba(255,255,255,0.05)', 
+                            color: '#9CA3AF' 
+                        }}
+                    >
+                        <RefreshCw size={18} className={loading ? 'animate-spin' : ''} />
+                        تحديث البيانات
+                    </button>
+                </div>
             </div>
 
             <div className="grid">
