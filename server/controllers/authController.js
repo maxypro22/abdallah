@@ -1,5 +1,6 @@
 const supabase = require('../config/supabase');
 const jwt = require('jsonwebtoken');
+const { mapUser } = require('../utils/mapper');
 
 exports.register = async (req, res) => {
     try {
@@ -44,7 +45,7 @@ exports.register = async (req, res) => {
 
         const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET);
         console.log('✅ Registration successful');
-        res.status(201).send({ user, token });
+        res.status(201).send({ user: mapUser(user), token });
     } catch (error) {
         console.error('🔥 Registration Error:', error);
         res.status(400).send({ error: error.message });
@@ -78,7 +79,7 @@ exports.login = async (req, res) => {
 
         const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET);
         console.log('✅ Login successful');
-        res.send({ user, token });
+        res.send({ user: mapUser(user), token });
     } catch (error) {
         console.error('🔥 Login Error:', error);
         res.status(500).send({ error: error.message || 'حدث خطأ أثناء تسجيل الدخول' });

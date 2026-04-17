@@ -23,12 +23,13 @@ exports.getStats = async (req, res) => {
         const totalRevenue = (paidInvoices || []).reduce((acc, inv) => acc + Number(inv.amount), 0);
         const totalPending = (pendingInvoices || []).reduce((acc, inv) => acc + Number(inv.amount), 0);
 
+        // Map response to match frontend expectations
         res.send({
             lawyerCount: lawyerCount || 0,
             caseCount: caseCount || 0,
             totalRevenue: ['Super Admin', 'Accountant'].includes(req.user.role) ? totalRevenue : 0,
             totalPending: ['Super Admin', 'Accountant'].includes(req.user.role) ? totalPending : 0,
-            recentActivity: []
+            recentActivity: [] // Optional: map activity logs if implemented
         });
     } catch (error) {
         console.error('🔥 Dashboard Stats Error:', error);

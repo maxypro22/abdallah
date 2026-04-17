@@ -1,4 +1,5 @@
 const supabase = require('../config/supabase');
+const { mapUser } = require('../utils/mapper');
 
 exports.getUsers = async (req, res) => {
     try {
@@ -9,7 +10,7 @@ exports.getUsers = async (req, res) => {
             .order('created_at', { ascending: false });
         
         if (error) throw error;
-        res.send(users);
+        res.send(users.map(mapUser));
     } catch (error) {
         res.status(500).send({ error: 'فشل جلب قائمة المستخدمين', details: error.message });
     }
@@ -40,7 +41,7 @@ exports.createUser = async (req, res) => {
             .single();
 
         if (error) throw error;
-        res.status(201).send(user);
+        res.status(201).send(mapUser(user));
     } catch (error) {
         res.status(400).send({ error: 'فشل إنشاء المستخدم', details: error.message });
     }
@@ -63,7 +64,7 @@ exports.updateUser = async (req, res) => {
             .single();
 
         if (error || !user) return res.status(404).send({ error: 'المستخدم غير موجود' });
-        res.send(user);
+        res.send(mapUser(user));
     } catch (error) {
         res.status(400).send({ error: 'فشل تحديث بيانات المستخدم', details: error.message });
     }

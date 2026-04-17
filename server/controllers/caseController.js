@@ -1,4 +1,5 @@
 const supabase = require('../config/supabase');
+const { mapCase, mapHearing } = require('../utils/mapper');
 
 exports.createCase = async (req, res) => {
     try {
@@ -28,7 +29,7 @@ exports.createCase = async (req, res) => {
         if (error) throw error;
 
         console.log('✅ Case created successfully');
-        res.status(201).send(data);
+        res.status(201).send(mapCase(data));
     } catch (error) {
         console.error('🔥 Create Case Error:', error);
         res.status(400).send({ error: 'فشل حفظ القضية', details: error.message });
@@ -58,7 +59,7 @@ exports.getCases = async (req, res) => {
         const { data, error } = await query;
         if (error) throw error;
 
-        res.send(data);
+        res.send(data.map(mapCase));
     } catch (error) {
         console.error('🔥 Get Cases Error:', error);
         res.status(500).send({ error: 'فشل استرجاع القضايا', details: error.message });
@@ -87,7 +88,10 @@ exports.getCase = async (req, res) => {
         
         if (hError) throw hError;
 
-        res.send({ caseItem, hearings });
+        res.send({ 
+            caseItem: mapCase(caseItem), 
+            hearings: hearings.map(mapHearing) 
+        });
     } catch (error) {
         console.error('🔥 Get Case Error:', error);
         res.status(404).send({ error: 'حدث خطأ أثناء جلب القضية', details: error.message });
@@ -106,7 +110,6 @@ exports.updateCase = async (req, res) => {
             memo: req.body.memo
         };
 
-        // If assigned lawyer is being updated
         if (req.body.assignedLawyer) {
             const { data: lawyer } = await supabase
                 .from('profiles')
@@ -132,7 +135,7 @@ exports.updateCase = async (req, res) => {
         const { data, error } = await query.select().single();
         if (error) throw error;
 
-        res.send(data);
+        res.send(mapCase(data));
     } catch (error) {
         console.error('🔥 Update Case Error:', error);
         res.status(400).send({ error: 'فشل تحديث بيانات القضية', details: error.message });
@@ -181,7 +184,7 @@ exports.addHearing = async (req, res) => {
             .single();
 
         if (error) throw error;
-        res.status(201).send(data);
+        res.status(201).send(mapHearing(data));
     } catch (error) {
         console.error('🔥 Add Hearing Error:', error);
         res.status(400).send({ error: 'فشل إضافة الجلسة', details: error.message });
@@ -206,7 +209,7 @@ exports.getHearings = async (req, res) => {
         const { data, error } = await query.order('date', { ascending: true });
         if (error) throw error;
 
-        res.send(data);
+        res.send(data.map(mapHearing));
     } catch (error) {
         res.status(500).send({ error: 'فشل جلب الجلسات', details: error.message });
     }
@@ -222,7 +225,7 @@ exports.updateHearing = async (req, res) => {
             .select()
             .single();
         if (error) throw error;
-        res.send(data);
+        res.send(mapHearing(data));
     } catch (error) {
         res.status(400).send({ error: 'فشل تحديث الجلسة', details: error.message });
     }

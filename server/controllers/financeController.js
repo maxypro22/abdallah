@@ -1,4 +1,5 @@
 const supabase = require('../config/supabase');
+const { mapInvoice } = require('../utils/mapper');
 
 exports.getInvoices = async (req, res) => {
     try {
@@ -14,7 +15,7 @@ exports.getInvoices = async (req, res) => {
 
         const { data, error } = await query;
         if (error) throw error;
-        res.send(data);
+        res.send(data.map(mapInvoice));
     } catch (error) {
         res.status(500).send({ error: 'فشل جلب الفواتير', details: error.message });
     }
@@ -37,7 +38,7 @@ exports.createInvoice = async (req, res) => {
             .single();
 
         if (error) throw error;
-        res.status(201).send(data);
+        res.status(201).send(mapInvoice(data));
     } catch (error) {
         res.status(400).send({ error: 'فشل إنشاء الفاتورة', details: error.message });
     }
@@ -59,7 +60,7 @@ exports.updateInvoice = async (req, res) => {
             .single();
 
         if (error) throw error;
-        res.send(data);
+        res.send(mapInvoice(data));
     } catch (error) {
         res.status(400).send({ error: 'فشل تحديث الفاتورة', details: error.message });
     }
