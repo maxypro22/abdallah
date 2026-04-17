@@ -38,28 +38,33 @@ exports.createCase = async (req, res) => {
 
 exports.getCases = async (req, res) => {
     try {
+        console.log('🔍 Fetching cases for user:', req.user.email);
+        console.log('🏛️ Law Firm ID:', req.user.law_firm_id);
+
         if (!req.user || !req.user.law_firm_id) {
+            console.warn('⚠️ No Law Firm ID found for user');
             return res.status(401).send({ error: 'جلسة العمل انتهت، يرجى تسجيل الدخول مجدداً' });
         }
 
-        let query = supabase
+        // Simplified query to verify basic data retrieval
+        const { data, error } = await supabase
             .from('cases')
-            .select('*, created_by:profiles(name)')
+            .select('*')
             .eq('law_firm_id', req.user.law_firm_id)
             .order('created_at', { ascending: false });
 
-        if (req.query.status && req.query.status !== 'all') {
-            query = query.eq('status', req.query.status);
+        if (error) {
+            console.error('❌ Supabase Query Error:', error);
+            throw error;
         }
 
-        if (req.user.role === 'Lawyer') {
-            query = query.eq('created_by_id', req.user.id);
+        console.log(`📊 Found ${data?.length || 0} cases`);
+        
+        if (!data || data.length === 0) {
+            console.log('ℹ️ No cases found in DB for this law_firm_id');
         }
 
-        const { data, error } = await query;
-        if (error) throw error;
-
-        res.send(data.map(mapCase));
+        res.send((data || []).map(mapCase));
     } catch (error) {
         console.error('🔥 Get Cases Error:', error);
         res.status(500).send({ error: 'فشل استرجاع القضايا', details: error.message });
