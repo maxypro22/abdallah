@@ -22,8 +22,12 @@ const CaseDetails = () => {
         try {
             if (!data) return;
 
-            const { caseItem, hearings } = data;
+            const { caseItem, hearings, invoices } = data;
             
+            // Calculate financial totals
+            const paidTotal = (invoices || []).filter(inv => inv.status === 'paid').reduce((sum, inv) => sum + Number(inv.amount), 0);
+            const pendingTotal = (invoices || []).filter(inv => inv.status === 'pending').reduce((sum, inv) => sum + Number(inv.amount), 0);
+
             // Headers for Case + Hearings
             const headers = ['الرقم/التاريخ', 'اسم الموكل/الجلسة', 'التفاصيل/المحكمة', 'الحالة/النتيجة'];
             
@@ -34,6 +38,11 @@ const CaseDetails = () => {
                 `"المحكمة: ${caseItem.court || '---'}"`,
                 `"الحالة: ${caseItem.status === 'new' ? 'جديدة' : caseItem.status === 'adjourned' ? 'مؤجلة' : 'منتهية'}"`
             ]];
+
+            // Financial Summary Rows
+            rows.push(['""', '""', '""', '""']);
+            rows.push(['"الملخص المالي"', '""', '""', '""']);
+            rows.push([`"إجمالي المدفوع: ${paidTotal} ر.ق"`, `"إجمالي المتبقي: ${pendingTotal} ر.ق"`, `"عدد الفواتير: ${(invoices || []).length}"`, '""']);
 
             // Empty row separator
             rows.push(['""', '""', '""', '""']);

@@ -1,5 +1,5 @@
 const supabase = require('../config/supabase');
-const { mapCase, mapHearing } = require('../utils/mapper');
+const { mapCase, mapHearing, mapInvoice } = require('../utils/mapper');
 
 exports.createCase = async (req, res) => {
     try {
@@ -92,23 +92,32 @@ exports.getCase = async (req, res) => {
             throw error;
         }
 
-        console.log('✅ Case item found. Fetching hearings...');
+        console.log('✅ Case item found. Fetching hearings and invoices...');
 
-        const { data: hearings, error: hError } = await supabase
-            .from('hearings')
-            .select('*')
-            .eq('case_id', req.params.id);
+        const [
+            { data: hearings, error: hError },
+            { data: invoices, error: iError }
+        ] = await Promise.all([
+            supabase.from('hearings').select('*').eq('case_id', req.params.id),
+            supabase.from('invoices').select('*').eq('case_id', req.params.id)
+        ]);
         
         if (hError) {
             console.error('❌ Error fetching hearings:', hError);
             throw hError;
         }
 
-        console.log(`📊 Found ${hearings?.length || 0} hearings`);
+        if (iError) {
+            console.error('❌ Error fetching invoices:', iError);
+            throw iError;
+        }
+
+        console.log(`📊 Found ${hearings?.length || 0} hearings and ${invoices?.length || 0} invoices`);
 
         res.send({ 
             caseItem: mapCase(caseItem), 
-            hearings: (hearings || []).map(mapHearing) 
+            hearings: (hearings || []).map(mapHearing),
+            invoices: (invoices || []).map(mapInvoice)
         });
     } catch (error) {
         console.error('🔥 Get Case Error:', error);

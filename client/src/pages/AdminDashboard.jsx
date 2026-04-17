@@ -13,6 +13,7 @@ const AdminDashboard = () => {
         totalPending: 0
     });
     const [cases, setCases] = useState([]);
+    const [invoices, setInvoices] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [loading, setLoading] = useState(true);
     const [showEditForm, setShowEditForm] = useState(false);
@@ -29,12 +30,14 @@ const AdminDashboard = () => {
             const statusParam = statusFilter !== 'all' ? `?status=${statusFilter}` : '';
             const tParam = force ? (statusParam ? `&t=${Date.now()}` : `?t=${Date.now()}`) : '';
 
-            const [statsRes, casesRes] = await Promise.all([
+            const [statsRes, casesRes, invoicesRes] = await Promise.all([
                 api.get('/dashboard/stats' + (force ? `?t=${Date.now()}` : '')),
-                api.get('/cases' + statusParam + tParam)
+                api.get('/cases' + statusParam + tParam),
+                api.get('/finance/invoices')
             ]);
             setStats(statsRes.data);
             setCases(casesRes.data);
+            setInvoices(invoicesRes.data || []);
         } catch (error) {
             console.error('Failed to fetch data:', error);
         }
@@ -49,19 +52,27 @@ const AdminDashboard = () => {
             }
 
             // Headers in Arabic
-            const headers = ['رقم القضية', 'اسم الموكل', 'الهاتف', 'نوع القضية', 'المحكمة', 'الحالة', 'المذكرة', 'تاريخ التسجيل'];
+            const headers = ['رقم القضية', 'اسم الموكل', 'الهاتف', 'نوع القضية', 'المحكمة', 'الحالة', 'المبلغ المدفوع (ر.ق)', 'المبلغ المتبقي (ر.ق)', 'تاريخ التسجيل'];
             
-            // Map rows and escape data for CSV (wrapping in quotes to handle commas)
-            const rows = cases.map(c => [
-                `"${c.caseNumber || ''}"`,
-                `"${c.clientName || ''}"`,
-                `"${c.clientPhone || ''}"`,
-                `"${c.type || ''}"`,
-                `"${c.court || ''}"`,
-                `"${c.status === 'new' ? 'جديدة' : c.status === 'adjourned' ? 'مؤجلة' : 'منتهية'}"`,
-                `"${(c.memo || '').replace(/"/g, '""')}"`, // Escape double quotes
-                `"${new Date(c.createdAt).toLocaleDateString('ar-EG')}"`
-            ]);
+            // Map rows and escape data for CSV
+            const rows = cases.map(c => {
+                // Calculate finances for this specific case
+                const caseInvoices = invoices.filter(inv => inv.caseId === c._id);
+                const paid = caseInvoices.filter(inv => inv.status === 'paid').reduce((sum, inv) => sum + Number(inv.amount), 0);
+                const pending = caseInvoices.filter(inv => inv.status === 'pending').reduce((sum, inv) => sum + Number(inv.amount), 0);
+
+                return [
+                    `"${c.caseNumber || ''}"`,
+                    `"${c.clientName || ''}"`,
+                    `"${c.clientPhone || ''}"`,
+                    `"${c.type || ''}"`,
+                    `"${c.court || ''}"`,
+                    `"${c.status === 'new' ? 'جديدة' : c.status === 'adjourned' ? 'مؤجلة' : 'منتهية'}"`,
+                    `"${paid}"`,
+                    `"${pending}"`,
+                    `"${new Date(c.createdAt).toLocaleDateString('ar-EG')}"`
+                ];
+            });
 
             // Combine into string with UTF-8 BOM for Excel Arabic support
             const csvContent = "\uFEFF" + [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
@@ -71,7 +82,7 @@ const AdminDashboard = () => {
             const url = URL.createObjectURL(blob);
             const link = document.createElement('a');
             link.setAttribute('href', url);
-            const fileName = `المرقاب_نسخة_احتياطية_${new Date().toLocaleDateString('ar-EG').replace(/\//g, '-')}.csv`;
+            const fileName = `المرقاب_تقرير_شامل_${new Date().toLocaleDateString('ar-EG').replace(/\//g, '-')}.csv`;
             link.setAttribute('download', fileName);
             document.body.appendChild(link);
             link.click();
@@ -126,8 +137,8 @@ const AdminDashboard = () => {
     };
 
     const filteredCases = cases.filter(c =>
-        c.caseNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        c.clientName.toLowerCase().includes(searchTerm.toLowerCase())
+        (c.caseNumber || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (c.clientName || '').toLowerCase().includes(searchTerm.toLowerCase())
     );
 
     return (
