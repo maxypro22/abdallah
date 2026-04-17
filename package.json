@@ -1,0 +1,13 @@
+{
+  "name": "smoo-saas",
+  "version": "1.0.0",
+  "description": "Welcome to the Smoo SaaS project. This project is being initialized to build a high-quality SaaS application.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs"
+}
