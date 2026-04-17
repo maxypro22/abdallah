@@ -19,13 +19,17 @@
             "dest": "/server/index.js"
         },
         {
+            "src": "/assets/(.*)",
+            "dest": "/client/dist/assets/$1"
+        },
+        {
             "src": "/(.*)",
-            "dest": "/client/$1"
+            "dest": "/client/dist/$1",
+            "check": true
+        },
+        {
+            "src": "/(.*)",
+            "dest": "/client/dist/index.html"
         }
-    ],
-    "functions": {
-        "server/index.js": {
-            "maxDuration": 10
-        }
-    }
+    ]
 }
