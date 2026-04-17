@@ -73,9 +73,11 @@ exports.getCases = async (req, res) => {
 
 exports.getCase = async (req, res) => {
     try {
+        console.log(`🔍 Fetching details for Case ID: ${req.params.id}`);
+        
         let query = supabase
             .from('cases')
-            .select('*, created_by:profiles(name)')
+            .select('*')
             .eq('id', req.params.id)
             .eq('law_firm_id', req.user.law_firm_id);
 
@@ -84,18 +86,29 @@ exports.getCase = async (req, res) => {
         }
 
         const { data: caseItem, error } = await query.single();
-        if (error) throw error;
+        
+        if (error) {
+            console.error('❌ Error fetching case item:', error);
+            throw error;
+        }
+
+        console.log('✅ Case item found. Fetching hearings...');
 
         const { data: hearings, error: hError } = await supabase
             .from('hearings')
             .select('*')
             .eq('case_id', req.params.id);
         
-        if (hError) throw hError;
+        if (hError) {
+            console.error('❌ Error fetching hearings:', hError);
+            throw hError;
+        }
+
+        console.log(`📊 Found ${hearings?.length || 0} hearings`);
 
         res.send({ 
             caseItem: mapCase(caseItem), 
-            hearings: hearings.map(mapHearing) 
+            hearings: (hearings || []).map(mapHearing) 
         });
     } catch (error) {
         console.error('🔥 Get Case Error:', error);
