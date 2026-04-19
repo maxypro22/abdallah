@@ -46,12 +46,20 @@ exports.getCases = async (req, res) => {
             return res.status(401).send({ error: 'جلسة العمل انتهت، يرجى تسجيل الدخول مجدداً' });
         }
 
-        // Simplified query to verify basic data retrieval
-        const { data, error } = await supabase
+        let query = supabase
             .from('cases')
             .select('*')
-            .eq('law_firm_id', req.user.law_firm_id)
-            .order('created_at', { ascending: false });
+            .eq('law_firm_id', req.user.law_firm_id);
+
+        if (req.query.status && req.query.status !== 'all') {
+            query = query.eq('status', req.query.status);
+        }
+
+        if (req.user.role === 'Lawyer') {
+            query = query.eq('created_by_id', req.user.id);
+        }
+
+        const { data, error } = await query.order('created_at', { ascending: false });
 
         if (error) {
             console.error('❌ Supabase Query Error:', error);

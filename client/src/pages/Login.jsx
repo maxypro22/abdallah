@@ -39,7 +39,7 @@ const Login = () => {
         <div className="auth-container" style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
             <div className="card auth-card" style={{ width: '100%', maxWidth: '400px' }}>
                 <div style={{ textAlign: 'center', marginBottom: '2.5rem' }}>
-                    <h1 style={{ color: '#000000', margin: 0, fontSize: '1.7rem', fontWeight: 800 }}>المرقاب للمحاماة والاستشارات القانونية</h1>
+                    <h1 style={{ color: '#FFFFFF', margin: 0, fontSize: '1.7rem', fontWeight: 800 }}>المرقاب للمحاماة والاستشارات القانونية</h1>
                     <p style={{ color: 'var(--text-muted)', marginTop: '8px', fontSize: '0.95rem' }}>نظام إدارة القانون المتكامل</p>
                 </div>
 

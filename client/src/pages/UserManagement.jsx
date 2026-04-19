@@ -82,10 +82,12 @@ const UserManagement = () => {
                     <h1 style={{ margin: 0 }}>إدارة فريق العمل</h1>
                     <p style={{ color: '#9CA3AF', margin: '5px 0 0 0' }}>إدارة المحامين وصلاحيات الوصول</p>
                 </div>
-                <button onClick={handleOpenCreate} className="button-primary" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <UserPlus size={18} />
-                    إضافة عضو جديد
-                </button>
+                {currentUser?.role === 'Super Admin' && (
+                    <button onClick={handleOpenCreate} className="button-primary" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <UserPlus size={18} />
+                        إضافة عضو جديد
+                    </button>
+                )}
             </div>
 
             {showForm && (
@@ -139,14 +141,18 @@ const UserManagement = () => {
                                     </td>
                                     <td>{new Date(u.createdAt).toLocaleDateString('ar-EG')}</td>
                                     <td>
-                                        <div style={{ display: 'flex', gap: '15px' }}>
-                                            <button onClick={() => handleOpenEdit(u)} style={{ background: 'none', border: 'none', color: '#F59E0B', cursor: 'pointer', padding: 0 }} title="تعديل">
-                                                <Edit2 size={16} />
-                                            </button>
-                                            <button onClick={() => handleDelete(u._id)} style={{ background: 'none', border: 'none', color: '#EF4444', cursor: 'pointer', padding: 0 }} title="حذف">
-                                                <Trash2 size={16} />
-                                            </button>
-                                        </div>
+                                        {currentUser?.role === 'Super Admin' ? (
+                                            <div style={{ display: 'flex', gap: '15px' }}>
+                                                <button onClick={() => handleOpenEdit(u)} style={{ background: 'none', border: 'none', color: '#F59E0B', cursor: 'pointer', padding: 0 }} title="تعديل">
+                                                    <Edit2 size={16} />
+                                                </button>
+                                                <button onClick={() => handleDelete(u._id)} style={{ background: 'none', border: 'none', color: '#EF4444', cursor: 'pointer', padding: 0 }} title="حذف">
+                                                    <Trash2 size={16} />
+                                                </button>
+                                            </div>
+                                        ) : (
+                                            <span style={{ color: '#9CA3AF' }}>---</span>
+                                        )}
                                     </td>
                                 </tr>
                             ))}

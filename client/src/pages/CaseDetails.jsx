@@ -7,6 +7,8 @@ const CaseDetails = () => {
     const { id } = useParams();
     const navigate = useNavigate();
     const [data, setData] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [errorMsg, setErrorMsg] = useState('');
     const [newHearing, setNewHearing] = useState({ date: '', time: '', court: '', result: '' });
 
     useEffect(() => {
@@ -14,8 +16,17 @@ const CaseDetails = () => {
     }, [id]);
 
     const fetchCaseDetails = async () => {
-        const { data } = await api.get(`/cases/${id}`);
-        setData(data);
+        setLoading(true);
+        try {
+            const { data } = await api.get(`/cases/${id}`);
+            setData(data);
+            setErrorMsg('');
+        } catch (error) {
+            console.error('Failed to fetch case details:', error);
+            setErrorMsg(error.response?.data?.error || 'حدث خطأ أثناء جلب تفاصيل القضية أو لا تملك صلاحية للوصول إليها.');
+        } finally {
+            setLoading(false);
+        }
     };
 
     const handleExportCaseCSV = () => {
@@ -77,12 +88,20 @@ const CaseDetails = () => {
 
     const handleAddHearing = async (e) => {
         e.preventDefault();
-        await api.post('/cases/hearings', { ...newHearing, caseId: id });
-        setNewHearing({ date: '', time: '', court: '', result: '' });
-        fetchCaseDetails();
+        try {
+            await api.post('/cases/hearings', { ...newHearing, caseId: id });
+            setNewHearing({ date: '', time: '', court: '', result: '' });
+            fetchCaseDetails();
+            alert('تم تسجيل الجلسة بنجاح');
+        } catch (error) {
+            console.error('Error adding hearing:', error);
+            alert(error.response?.data?.error || 'حدث خطأ أثناء محاولة تسجيل الجلسة.');
+        }
     };
 
-    if (!data) return <div className="card">جاري التحميل...</div>;
+    if (loading) return <div className="card">جاري التحميل...</div>;
+    if (errorMsg) return <div className="card" style={{ color: 'red', textAlign: 'center' }}>{errorMsg}</div>;
+    if (!data) return null;
 
     const statusLabels = {
         'new': 'جديدة',
