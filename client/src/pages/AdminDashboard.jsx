@@ -15,6 +15,7 @@ const AdminDashboard = () => {
     });
     const [cases, setCases] = useState([]);
     const [invoices, setInvoices] = useState([]);
+    const [hearings, setHearings] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [loading, setLoading] = useState(true);
     const [showEditForm, setShowEditForm] = useState(false);
@@ -37,7 +38,8 @@ const AdminDashboard = () => {
 
             const promises = [
                 api.get('/dashboard/stats' + (force ? `?t=${Date.now()}` : '')),
-                api.get('/cases' + statusParam + tParam)
+                api.get('/cases' + statusParam + tParam),
+                api.get('/cases/hearings/all')
             ];
 
             if (currentUser?.role === 'Super Admin') {
@@ -47,9 +49,10 @@ const AdminDashboard = () => {
             const results = await Promise.all(promises);
             setStats(results[0].data);
             setCases(results[1].data);
+            setHearings(results[2].data || []);
             
-            if (currentUser?.role === 'Super Admin' && results[2]) {
-                setInvoices(results[2].data || []);
+            if (currentUser?.role === 'Super Admin' && results[3]) {
+                setInvoices(results[3].data || []);
             } else {
                 setInvoices([]);
             }
@@ -67,7 +70,7 @@ const AdminDashboard = () => {
             }
 
             // Headers in Arabic
-            const headers = ['رقم القضية', 'اسم الموكل', 'الهاتف', 'نوع القضية', 'المحكمة', 'الحالة', 'المبلغ المدفوع (ر.ق)', 'المبلغ المتبقي (ر.ق)', 'تاريخ التسجيل'];
+            const headers = ['رقم القضية', 'اسم الموكل', 'الهاتف', 'نوع القضية', 'المحكمة', 'الحالة', 'المبلغ المدفوع (ر.ق)', 'المبلغ المتبقي (ر.ق)', 'سجل الجلسات', 'تاريخ التسجيل'];
             
             // Map rows and escape data for CSV
             const rows = cases.map(c => {
@@ -75,6 +78,14 @@ const AdminDashboard = () => {
                 const caseInvoices = invoices.filter(inv => inv.caseId === c._id);
                 const paid = caseInvoices.filter(inv => inv.status === 'paid').reduce((sum, inv) => sum + Number(inv.amount), 0);
                 const pending = caseInvoices.filter(inv => inv.status === 'pending').reduce((sum, inv) => sum + Number(inv.amount), 0);
+
+                // Format hearings
+                const caseHearings = hearings.filter(h => h.caseId?._id === c._id);
+                const hearingsText = caseHearings.map(h => {
+                    const d = new Date(h.date).toLocaleDateString('ar-EG');
+                    const st = h.result ? '(تمت)' : '(انتظار)';
+                    return `${d} ${st}`;
+                }).join(' | ') || 'لا توجد جلسات';
 
                 return [
                     `"${c.caseNumber || ''}"`,
@@ -85,6 +96,7 @@ const AdminDashboard = () => {
                     `"${c.status === 'new' ? 'جديدة' : c.status === 'adjourned' ? 'مؤجلة' : 'منتهية'}"`,
                     `"${paid}"`,
                     `"${pending}"`,
+                    `"${hearingsText}"`,
                     `"${new Date(c.createdAt).toLocaleDateString('ar-EG')}"`
                 ];
             });

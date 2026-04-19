@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import api from '../services/api';
-import { Calendar, MapPin, Clock, Edit2, Trash2, X, Save } from 'lucide-react';
+import { Calendar, MapPin, Clock, Edit2, Trash2, X, Save, Download } from 'lucide-react';
 
 const HearingsTimeline = () => {
     const [hearings, setHearings] = useState([]);
@@ -28,6 +28,47 @@ const HearingsTimeline = () => {
             setHearings(data);
         } catch (error) {
             console.error('Failed to fetch hearings:', error);
+        }
+    };
+
+    const handleExportCSV = () => {
+        try {
+            const filteredHearings = hearings.filter(h => {
+                if (statusFilter === 'pending' && h.result) return false;
+                if (statusFilter === 'completed' && !h.result) return false;
+                return true;
+            });
+
+            if (filteredHearings.length === 0) {
+                alert('لا توجد بيانات لتصديرها حالياً');
+                return;
+            }
+
+            const headers = ['رقم القضية', 'اسم الموكل', 'تاريخ الجلسة', 'الوقت', 'المحكمة/الدائرة', 'الحالة', 'الملاحظات / النتيجة'];
+            
+            const rows = filteredHearings.map(h => [
+                `"${h.caseId?.caseNumber || ''}"`,
+                `"${h.caseId?.clientName || ''}"`,
+                `"${new Date(h.date).toLocaleDateString('ar-EG')}"`,
+                `"${h.time || ''}"`,
+                `"${h.court || ''}"`,
+                `"${h.result ? 'تمت الجلسة' : 'قيد الانتظار'}"`,
+                `"${(h.result || '').replace(/"/g, '""')}"`
+            ]);
+
+            const csvContent = "\uFEFF" + [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.setAttribute('href', url);
+            const fileName = `سجل_الجلسات_${new Date().toLocaleDateString('ar-EG').replace(/\//g, '-')}.csv`;
+            link.setAttribute('download', fileName);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        } catch (error) {
+            console.error('Export Error:', error);
+            alert('حدث خطأ أثناء محاولة تصدير البيانات');
         }
     };
 
@@ -98,6 +139,22 @@ const HearingsTimeline = () => {
                     {(dateRange.start || dateRange.end || statusFilter !== 'all') && (
                         <button onClick={() => { setDateRange({ start: '', end: '' }); setStatusFilter('all'); }} style={{ background: 'none', border: 'none', color: 'var(--danger)', cursor: 'pointer', fontSize: '0.85rem' }}>مسح الفلتر</button>
                     )}
+                    <button 
+                        onClick={handleExportCSV} 
+                        className="button-primary" 
+                        style={{ 
+                            display: 'flex', 
+                            alignItems: 'center', 
+                            gap: '8px', 
+                            background: 'rgba(16, 185, 129, 0.15)', 
+                            color: '#10B981',
+                            border: '1px solid rgba(16, 185, 129, 0.3)',
+                            padding: '6px 12px'
+                        }}
+                    >
+                        <Download size={16} />
+                        تصدير (Excel)
+                    </button>
                 </div>
             </div>
 
