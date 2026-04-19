@@ -96,8 +96,8 @@ const AccountantDashboard = () => {
     };
 
     const filteredInvoices = invoices.filter(i => {
-        const matchSearch = (i.caseId?.caseNumber || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-                            (i.caseId?.clientName || '').toLowerCase().includes(searchTerm.toLowerCase());
+        const matchSearch = (i.case?.caseNumber || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+                            (i.case?.clientName || '').toLowerCase().includes(searchTerm.toLowerCase());
         
         let matchDate = true;
         if (monthFilter !== 'all' || yearFilter !== 'all') {
@@ -241,9 +241,9 @@ const AccountantDashboard = () => {
                         <tbody>
                             {paginatedInvoices.map(i => (
                                 <tr key={i._id}>
-                                    <td style={{ fontWeight: 600 }}>{i.caseId?.caseNumber || '---'}</td>
-                                    <td>{i.caseId?.clientName || '---'}</td>
-                                    <td style={{ direction: 'ltr', textAlign: 'right' }}>{i.caseId?.clientPhone || '---'}</td>
+                                    <td style={{ fontWeight: 600 }}>{i.case?.caseNumber || '---'}</td>
+                                    <td>{i.case?.clientName || '---'}</td>
+                                    <td style={{ direction: 'ltr', textAlign: 'right' }}>{i.case?.clientPhone || '---'}</td>
                                     <td>{i.description}</td>
                                     <td>{i.amount.toLocaleString()} ر.ق</td>
                                     <td>

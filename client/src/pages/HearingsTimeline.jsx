@@ -47,8 +47,8 @@ const HearingsTimeline = () => {
             const headers = ['رقم القضية', 'اسم الموكل', 'تاريخ الجلسة', 'الوقت', 'المحكمة/الدائرة', 'الحالة', 'الملاحظات / النتيجة'];
             
             const rows = filteredHearings.map(h => [
-                `"${h.caseId?.caseNumber || ''}"`,
-                `"${h.caseId?.clientName || ''}"`,
+                `"${h.case?.caseNumber || ''}"`,
+                `"${h.case?.clientName || ''}"`,
                 `"${new Date(h.date).toLocaleDateString('ar-EG')}"`,
                 `"${h.time || ''}"`,
                 `"${h.court || ''}"`,
@@ -211,8 +211,8 @@ const HearingsTimeline = () => {
                             </div>
 
                             <div>
-                                <h4 style={{ margin: 0, fontSize: '1.2rem', color: 'var(--text)' }}>قضية رقم: {h.caseId?.caseNumber || '---'}</h4>
-                                <p style={{ margin: '8px 0', color: 'var(--text-muted)', fontWeight: 500 }}>{h.caseId?.clientName}</p>
+                                <h4 style={{ margin: 0, fontSize: '1.2rem', color: 'var(--text)' }}>قضية رقم: {h.case?.caseNumber || '---'}</h4>
+                                <p style={{ margin: '8px 0', color: 'var(--text-muted)', fontWeight: 500 }}>{h.case?.clientName}</p>
                                 <div style={{ display: 'flex', gap: '1.5rem', fontSize: '0.95rem', color: 'var(--accent)', fontWeight: 600 }}>
                                     <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><Clock size={16} /> {h.time}</span>
                                     <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><MapPin size={16} /> {h.court}</span>
