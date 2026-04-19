@@ -3,6 +3,7 @@ import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { Users, Gavel, TrendingUp, AlertCircle, RefreshCw, Edit2, ExternalLink, X, Save, Trash2, Search, Download } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import Pagination from '../components/Pagination';
 
 const AdminDashboard = () => {
     const { user: currentUser } = useAuth();
@@ -23,6 +24,10 @@ const AdminDashboard = () => {
     });
 
     const [statusFilter, setStatusFilter] = useState('all');
+    const [monthFilter, setMonthFilter] = useState('all');
+    const [yearFilter, setYearFilter] = useState('all');
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 10;
 
     const fetchData = async (force = false) => {
         setLoading(true);
@@ -95,7 +100,12 @@ const AdminDashboard = () => {
 
     useEffect(() => {
         fetchData();
+        setCurrentPage(1);
     }, [statusFilter]);
+
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [searchTerm, monthFilter, yearFilter]);
 
     const handleOpenEdit = (c) => {
         setEditingCaseId(c._id);
@@ -136,10 +146,22 @@ const AdminDashboard = () => {
         }
     };
 
-    const filteredCases = cases.filter(c =>
-        (c.caseNumber || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (c.clientName || '').toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    const filteredCases = cases.filter(c => {
+        const matchSearch = (c.caseNumber || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+                            (c.clientName || '').toLowerCase().includes(searchTerm.toLowerCase());
+        
+        let matchDate = true;
+        if (monthFilter !== 'all' || yearFilter !== 'all') {
+            const date = new Date(c.createdAt || c.created_at || Date.now()); // Fallback
+            if (monthFilter !== 'all' && date.getMonth() + 1 !== parseInt(monthFilter)) matchDate = false;
+            if (yearFilter !== 'all' && date.getFullYear() !== parseInt(yearFilter)) matchDate = false;
+        }
+
+        return matchSearch && matchDate;
+    });
+
+    const totalPages = Math.ceil(filteredCases.length / itemsPerPage);
+    const paginatedCases = filteredCases.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
     return (
         <div>
@@ -280,12 +302,34 @@ const AdminDashboard = () => {
                             value={statusFilter}
                             onChange={e => setStatusFilter(e.target.value)}
                             className="input-field"
-                            style={{ marginBottom: 0, width: '150px' }}
+                            style={{ marginBottom: 0, width: '130px' }}
                         >
-                            <option value="all">عرض الكل</option>
+                            <option value="all">كل الحالات</option>
                             <option value="new">جديدة</option>
                             <option value="adjourned">مؤجلة</option>
                             <option value="closed">منتهية</option>
+                        </select>
+                        <select
+                            value={monthFilter}
+                            onChange={e => setMonthFilter(e.target.value)}
+                            className="input-field"
+                            style={{ marginBottom: 0, width: '130px' }}
+                        >
+                            <option value="all">كل الأشهر</option>
+                            {[...Array(12).keys()].map(m => (
+                                <option key={m + 1} value={m + 1}>{new Date(0, m).toLocaleString('ar-EG', { month: 'long' })}</option>
+                            ))}
+                        </select>
+                        <select
+                            value={yearFilter}
+                            onChange={e => setYearFilter(e.target.value)}
+                            className="input-field"
+                            style={{ marginBottom: 0, width: '120px' }}
+                        >
+                            <option value="all">كل السنوات</option>
+                            {[2024, 2025, 2026, 2027].map(y => (
+                                <option key={y} value={y}>{y}</option>
+                            ))}
                         </select>
                         <div style={{ position: 'relative', width: '300px' }}>
                             <input
@@ -313,7 +357,7 @@ const AdminDashboard = () => {
                             </tr>
                         </thead>
                         <tbody>
-                            {(searchTerm ? filteredCases : cases).map(c => (
+                            {paginatedCases.map(c => (
                                 <tr key={c._id}>
                                     <td style={{ fontWeight: 600 }}>{c.caseNumber}</td>
                                     <td>{c.clientName}</td>
@@ -348,6 +392,7 @@ const AdminDashboard = () => {
                         </tbody>
                     </table>
                 </div>
+                <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
                 <div style={{ marginTop: '1rem', textAlign: 'center', fontSize: '0.7rem', color: '#4B5563' }}>
                     Admin Portal V1.4 - Real-time Enabled
                 </div>

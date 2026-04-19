@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import api from '../services/api';
 import { DollarSign, FileText, Plus, Check, Edit2, Trash2, X, Save, Search } from 'lucide-react';
+import Pagination from '../components/Pagination';
 
 const AccountantDashboard = () => {
     const [invoices, setInvoices] = useState([]);
@@ -11,10 +12,19 @@ const AccountantDashboard = () => {
     const [formData, setFormData] = useState({ caseId: '', amount: '', description: '', dueDate: '', status: 'pending' });
 
     const [statusFilter, setStatusFilter] = useState('all');
+    const [monthFilter, setMonthFilter] = useState('all');
+    const [yearFilter, setYearFilter] = useState('all');
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 10;
 
     useEffect(() => {
         fetchData();
+        setCurrentPage(1);
     }, [statusFilter]);
+
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [searchTerm, monthFilter, yearFilter]);
 
     const fetchData = async () => {
         try {
@@ -84,6 +94,23 @@ const AccountantDashboard = () => {
             alert('فشل التحديث');
         }
     };
+
+    const filteredInvoices = invoices.filter(i => {
+        const matchSearch = (i.caseId?.caseNumber || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+                            (i.caseId?.clientName || '').toLowerCase().includes(searchTerm.toLowerCase());
+        
+        let matchDate = true;
+        if (monthFilter !== 'all' || yearFilter !== 'all') {
+            const date = new Date(i.createdAt || i.created_at || Date.now());
+            if (monthFilter !== 'all' && date.getMonth() + 1 !== parseInt(monthFilter)) matchDate = false;
+            if (yearFilter !== 'all' && date.getFullYear() !== parseInt(yearFilter)) matchDate = false;
+        }
+
+        return matchSearch && matchDate;
+    });
+
+    const totalPages = Math.ceil(filteredInvoices.length / itemsPerPage);
+    const paginatedInvoices = filteredInvoices.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
     return (
         <div>
@@ -157,11 +184,33 @@ const AccountantDashboard = () => {
                             value={statusFilter}
                             onChange={e => setStatusFilter(e.target.value)}
                             className="input-field"
-                            style={{ marginBottom: 0, width: '150px' }}
+                            style={{ marginBottom: 0, width: '130px' }}
                         >
-                            <option value="all">عرض الكل</option>
+                            <option value="all">كل الحالات</option>
                             <option value="paid">المدفوعة فقط</option>
                             <option value="pending">المعلقة فقط</option>
+                        </select>
+                        <select
+                            value={monthFilter}
+                            onChange={e => setMonthFilter(e.target.value)}
+                            className="input-field"
+                            style={{ marginBottom: 0, width: '130px' }}
+                        >
+                            <option value="all">كل الأشهر</option>
+                            {[...Array(12).keys()].map(m => (
+                                <option key={m + 1} value={m + 1}>{new Date(0, m).toLocaleString('ar-EG', { month: 'long' })}</option>
+                            ))}
+                        </select>
+                        <select
+                            value={yearFilter}
+                            onChange={e => setYearFilter(e.target.value)}
+                            className="input-field"
+                            style={{ marginBottom: 0, width: '120px' }}
+                        >
+                            <option value="all">كل السنوات</option>
+                            {[2024, 2025, 2026, 2027].map(y => (
+                                <option key={y} value={y}>{y}</option>
+                            ))}
                         </select>
                         <div style={{ position: 'relative', width: '300px' }}>
                             <input
@@ -190,10 +239,7 @@ const AccountantDashboard = () => {
                             </tr>
                         </thead>
                         <tbody>
-                            {invoices.filter(i =>
-                                (i.caseId?.caseNumber || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-                                (i.caseId?.clientName || '').toLowerCase().includes(searchTerm.toLowerCase())
-                            ).map(i => (
+                            {paginatedInvoices.map(i => (
                                 <tr key={i._id}>
                                     <td style={{ fontWeight: 600 }}>{i.caseId?.caseNumber || '---'}</td>
                                     <td>{i.caseId?.clientName || '---'}</td>
@@ -231,6 +277,7 @@ const AccountantDashboard = () => {
                         </tbody>
                     </table>
                 </div>
+                <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
             </div>
         </div>
     );

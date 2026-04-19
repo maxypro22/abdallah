@@ -14,10 +14,10 @@ const mapCase = (c) => {
         status: c.status,
         memo: c.memo,
         law_firm_id: c.law_firm_id,
-        created_by_id: c.created_by_id,
-        created_by_name: c.created_by_name || (c.created_by ? c.created_by.name : null),
-        assigned_lawyer_id: c.assigned_lawyer_id,
-        assigned_lawyer_name: c.assigned_lawyer_name,
+        createdBy_id: c.created_by_id,
+        createdBy_name: c.created_by_name || (c.created_by ? c.created_by.name : null),
+        assignedLawyer_id: c.assigned_lawyer_id,
+        assignedLawyer_name: c.assigned_lawyer_name,
         createdAt: c.created_at,
         updatedAt: c.updated_at
     };
@@ -39,6 +39,8 @@ const mapHearing = (h) => {
             caseNumber: h.case.case_number,
             clientName: h.case.client_name
         } : null,
+        createdBy_name: h.created_by_name || (h.created_by ? h.created_by.name : null),
+        createdBy_id: h.created_by_id,
         createdAt: h.created_at
     };
 };
