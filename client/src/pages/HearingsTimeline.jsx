@@ -9,6 +9,7 @@ const HearingsTimeline = () => {
     const [showEditForm, setShowEditForm] = useState(false);
 
     const [dateRange, setDateRange] = useState({ start: '', end: '' });
+    const [statusFilter, setStatusFilter] = useState('all');
 
     useEffect(() => {
         fetchHearings();
@@ -81,8 +82,21 @@ const HearingsTimeline = () => {
                         <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>إلى:</span>
                         <input type="date" value={dateRange.end} onChange={e => setDateRange({ ...dateRange, end: e.target.value })} className="input-field" style={{ marginBottom: 0, padding: '5px 10px' }} />
                     </div>
-                    {(dateRange.start || dateRange.end) && (
-                        <button onClick={() => setDateRange({ start: '', end: '' })} style={{ background: 'none', border: 'none', color: 'var(--danger)', cursor: 'pointer', fontSize: '0.85rem' }}>مسح الفلتر</button>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>حالة الجلسة:</span>
+                        <select 
+                            value={statusFilter} 
+                            onChange={e => setStatusFilter(e.target.value)} 
+                            className="input-field" 
+                            style={{ marginBottom: 0, padding: '5px 10px', minWidth: '130px' }}
+                        >
+                            <option value="all">كل الجلسات</option>
+                            <option value="pending">قيد الانتظار</option>
+                            <option value="completed">تمت الجلسة</option>
+                        </select>
+                    </div>
+                    {(dateRange.start || dateRange.end || statusFilter !== 'all') && (
+                        <button onClick={() => { setDateRange({ start: '', end: '' }); setStatusFilter('all'); }} style={{ background: 'none', border: 'none', color: 'var(--danger)', cursor: 'pointer', fontSize: '0.85rem' }}>مسح الفلتر</button>
                     )}
                 </div>
             </div>
@@ -127,7 +141,11 @@ const HearingsTimeline = () => {
             )}
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-                {hearings.map(h => (
+                {hearings.filter(h => {
+                    if (statusFilter === 'pending' && h.result) return false;
+                    if (statusFilter === 'completed' && !h.result) return false;
+                    return true;
+                }).map(h => (
                     <div key={h._id} className="card" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
                         <div style={{ display: 'flex', gap: '2rem', alignItems: 'center', flex: 1, minWidth: '300px' }}>
                             <div style={{ textAlign: 'center', background: 'rgba(197, 160, 33, 0.1)', padding: '1.25rem', borderRadius: '1rem', minWidth: '90px', border: '1px solid rgba(197, 160, 33, 0.2)' }}>
@@ -168,10 +186,14 @@ const HearingsTimeline = () => {
                         </div>
                     </div>
                 ))}
-                {hearings.length === 0 && (
+                {hearings.filter(h => {
+                    if (statusFilter === 'pending' && h.result) return false;
+                    if (statusFilter === 'completed' && !h.result) return false;
+                    return true;
+                }).length === 0 && (
                     <div className="card" style={{ textAlign: 'center', padding: '4rem', color: 'var(--text-muted)' }}>
                         <Calendar size={60} style={{ marginBottom: '1.5rem', opacity: 0.15 }} />
-                        <p style={{ fontSize: '1.2rem' }}>لا توجد جلسات مجدولة حالياً</p>
+                        <p style={{ fontSize: '1.2rem' }}>لا توجد بيانات تطابق الفلتر الحالي</p>
                     </div>
                 )}
             </div>

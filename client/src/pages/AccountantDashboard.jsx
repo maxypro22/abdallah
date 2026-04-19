@@ -208,7 +208,7 @@ const AccountantDashboard = () => {
                             style={{ marginBottom: 0, width: '120px' }}
                         >
                             <option value="all">كل السنوات</option>
-                            {[2024, 2025, 2026, 2027].map(y => (
+                            {[...Array(15).keys()].map(i => 2026 + i).map(y => (
                                 <option key={y} value={y}>{y}</option>
                             ))}
                         </select>

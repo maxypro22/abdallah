@@ -35,14 +35,24 @@ const AdminDashboard = () => {
             const statusParam = statusFilter !== 'all' ? `?status=${statusFilter}` : '';
             const tParam = force ? (statusParam ? `&t=${Date.now()}` : `?t=${Date.now()}`) : '';
 
-            const [statsRes, casesRes, invoicesRes] = await Promise.all([
+            const promises = [
                 api.get('/dashboard/stats' + (force ? `?t=${Date.now()}` : '')),
-                api.get('/cases' + statusParam + tParam),
-                api.get('/finance/invoices')
-            ]);
-            setStats(statsRes.data);
-            setCases(casesRes.data);
-            setInvoices(invoicesRes.data || []);
+                api.get('/cases' + statusParam + tParam)
+            ];
+
+            if (currentUser?.role === 'Super Admin') {
+                promises.push(api.get('/finance/invoices'));
+            }
+
+            const results = await Promise.all(promises);
+            setStats(results[0].data);
+            setCases(results[1].data);
+            
+            if (currentUser?.role === 'Super Admin' && results[2]) {
+                setInvoices(results[2].data || []);
+            } else {
+                setInvoices([]);
+            }
         } catch (error) {
             console.error('Failed to fetch data:', error);
         }
@@ -327,7 +337,7 @@ const AdminDashboard = () => {
                             style={{ marginBottom: 0, width: '120px' }}
                         >
                             <option value="all">كل السنوات</option>
-                            {[2024, 2025, 2026, 2027].map(y => (
+                            {[...Array(15).keys()].map(i => 2026 + i).map(y => (
                                 <option key={y} value={y}>{y}</option>
                             ))}
                         </select>
