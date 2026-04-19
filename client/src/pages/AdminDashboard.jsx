@@ -80,7 +80,7 @@ const AdminDashboard = () => {
                 const pending = caseInvoices.filter(inv => inv.status === 'pending').reduce((sum, inv) => sum + Number(inv.amount), 0);
 
                 // Format hearings
-                const caseHearings = hearings.filter(h => h.caseId?._id === c._id);
+                const caseHearings = hearings.filter(h => h.caseId === c._id);
                 const hearingsText = caseHearings.map(h => {
                     const d = new Date(h.date).toLocaleDateString('ar-EG');
                     const st = h.result ? '(تمت)' : '(انتظار)';

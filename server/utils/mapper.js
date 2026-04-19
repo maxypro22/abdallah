@@ -57,7 +57,8 @@ const mapInvoice = (i) => {
         law_firm_id: i.law_firm_id,
         case: i.case ? {
             caseNumber: i.case.case_number,
-            clientName: i.case.client_name
+            clientName: i.case.client_name,
+            clientPhone: i.case.client_phone
         } : null,
         createdAt: i.created_at
     };

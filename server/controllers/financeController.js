@@ -5,7 +5,7 @@ exports.getInvoices = async (req, res) => {
     try {
         let query = supabase
             .from('invoices')
-            .select('*, case:cases(case_number, client_name)')
+            .select('*, case:cases(case_number, client_name, client_phone)')
             .eq('law_firm_id', req.user.law_firm_id)
             .order('created_at', { ascending: false });
 
