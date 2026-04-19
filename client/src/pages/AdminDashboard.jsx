@@ -198,21 +198,23 @@ const AdminDashboard = () => {
                     <p style={{ color: '#9CA3AF', margin: '5px 0 0 0' }}>إحصائيات مباشرة وأداء المكتب</p>
                 </div>
                 <div style={{ display: 'flex', gap: '10px' }}>
-                    <button 
-                        onClick={handleExportCSV} 
-                        className="button-primary" 
-                        style={{ 
-                            display: 'flex', 
-                            alignItems: 'center', 
-                            gap: '8px', 
-                            background: 'rgba(16, 185, 129, 0.15)', 
-                            color: '#10B981',
-                            border: '1px solid rgba(16, 185, 129, 0.3)'
-                        }}
-                    >
-                        <Download size={18} />
-                        نسخة احتياطية (Excel)
-                    </button>
+                    {currentUser?.role === 'Super Admin' && (
+                        <button 
+                            onClick={handleExportCSV} 
+                            className="button-primary" 
+                            style={{ 
+                                display: 'flex', 
+                                alignItems: 'center', 
+                                gap: '8px', 
+                                background: 'rgba(16, 185, 129, 0.15)', 
+                                color: '#10B981',
+                                border: '1px solid rgba(16, 185, 129, 0.3)'
+                            }}
+                        >
+                            <Download size={18} />
+                            نسخة احتياطية (Excel)
+                        </button>
+                    )}
                     <button 
                         onClick={() => fetchData(true)} 
                         className="button-primary" 

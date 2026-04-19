@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import api from '../services/api';
 import { Calendar, MapPin, Clock, Edit2, Trash2, X, Save, Download } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 
 const HearingsTimeline = () => {
+    const { user: currentUser } = useAuth();
     const [hearings, setHearings] = useState([]);
     const [editingHearing, setEditingHearing] = useState(null);
     const [formData, setFormData] = useState({ date: '', time: '', court: '', result: '' });
@@ -139,22 +141,24 @@ const HearingsTimeline = () => {
                     {(dateRange.start || dateRange.end || statusFilter !== 'all') && (
                         <button onClick={() => { setDateRange({ start: '', end: '' }); setStatusFilter('all'); }} style={{ background: 'none', border: 'none', color: 'var(--danger)', cursor: 'pointer', fontSize: '0.85rem' }}>مسح الفلتر</button>
                     )}
-                    <button 
-                        onClick={handleExportCSV} 
-                        className="button-primary" 
-                        style={{ 
-                            display: 'flex', 
-                            alignItems: 'center', 
-                            gap: '8px', 
-                            background: 'rgba(16, 185, 129, 0.15)', 
-                            color: '#10B981',
-                            border: '1px solid rgba(16, 185, 129, 0.3)',
-                            padding: '6px 12px'
-                        }}
-                    >
-                        <Download size={16} />
-                        تصدير (Excel)
-                    </button>
+                    {currentUser?.role === 'Super Admin' && (
+                        <button 
+                            onClick={handleExportCSV} 
+                            className="button-primary" 
+                            style={{ 
+                                display: 'flex', 
+                                alignItems: 'center', 
+                                gap: '8px', 
+                                background: 'rgba(16, 185, 129, 0.15)', 
+                                color: '#10B981',
+                                border: '1px solid rgba(16, 185, 129, 0.3)',
+                                padding: '6px 12px'
+                            }}
+                        >
+                            <Download size={16} />
+                            تصدير (Excel)
+                        </button>
+                    )}
                 </div>
             </div>
 
